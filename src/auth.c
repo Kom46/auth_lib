@@ -50,9 +50,9 @@ struct user *find_user_in_list(char *username)
 bool validate_password(struct user *userptr, char *password)
 {
     bool result = false;
-#if defined(AUTH_password_NO_ENCRYPTION)
+#if defined(AUTH_PASSWORD_NO_ENCRYPTION)
     result = !strcmp(userptr->password, password);
-#endif // password_NO_ENCRYPTION
+#endif // AUTH_PASSWORD_NO_ENCRYPTION
     return result;
 }
 
@@ -67,14 +67,16 @@ bool validate_user_password(char *username, char *password)
     return result;
 }
 
-int register_user(char *username, char *password) {
+int register_user(char *username, char *password)
+{
     int result = AUTH_RESULT_OK;
     if (!((registered_users_count + 1) >= MAX_USER_NUM))
     {
         return AUTH_RESULT_USER_LIMIT_EXECEED;
     }
-    struct user * ptr = admin.next_user;
-    while(ptr->next_user != NULL) {
+    struct user *ptr = admin.next_user;
+    while (ptr->next_user != NULL)
+    {
         ptr = ptr->next_user;
     }
     ptr->next_user = (struct user *)malloc(sizeof(struct user));
@@ -86,4 +88,21 @@ int register_user(char *username, char *password) {
     ptr->next_user->password = strdup(password);
     ptr->next_user->next_user = NULL;
     return result;
+}
+
+void delete_user(char *username)
+{
+    // you cannot delete admin
+    assert(strcmp(username, ADMIN_USERNAME));
+    for (struct user *ptr = &admin; ptr != NULL; ptr = ptr->next_user)
+    {
+        if (!strcmp(ptr->next_user->username, username))
+        {
+            // if we match user, delete it
+            struct user *tmp = ptr->next_user;
+            ptr->next_user = tmp->next_user;
+            memset(tmp, 0, sizeof(struct user));
+            break;
+        }
+    }
 }

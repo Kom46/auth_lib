@@ -2,6 +2,9 @@
 #define __AUTH_H__
 
 #include <stdbool.h>
+#include <string.h>
+#include <assert.h>
+#include <stdlib.h>
 
 enum AUTH_RESULT_CODE
 {
