@@ -49,4 +49,4 @@ dirmake:
 clean:
 	rm -f $(OBJ_DIR)/*.o $(OUT_DIR)/$(OUTPUT) Makefile.bak
 
-rebuild: clean build
+rebuild: clean all

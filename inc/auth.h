@@ -6,6 +6,14 @@
 #include <assert.h>
 #include <stdlib.h>
 
+#ifndef MIN
+#define MIN(a,b) ((a) < (b) ? (a) : (b))
+#endif
+
+#ifndef MAX
+#define MAX(a,b) ((a) > (b) ? (a) : (b)) 
+#endif
+
 enum AUTH_RESULT_CODE
 {
     AUTH_RESULT_OK,
@@ -20,8 +28,10 @@ static struct user
     char *username;
     char *password;
     struct user *next_user;
-};
+} *userlist_head, *userlist_tail;
 
+// load registered users
+void load_registered_users(void);
 // initialize user list
 void init_user_list(void);
 // find user in list
@@ -34,5 +44,8 @@ bool validate_user_pass(char *username, char *pass);
 int register_user(char *username, char *pass);
 // delete user by user
 void delete_user(char *username);
-
+//  2 users alphabetic sort username
+struct user *user_alphabetic_sort(struct user *ptr1, struct user *ptr2);
+// sort linked list(user list)
+void stack_sort_list(struct user **ptr);
 #endif
