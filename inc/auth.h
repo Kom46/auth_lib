@@ -24,7 +24,6 @@ enum AUTH_RESULT_CODE
 
 static struct user
 {
-    /* data */
     char *username;
     char *password;
     struct user *next_user;

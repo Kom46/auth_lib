@@ -16,8 +16,6 @@ static struct user admin = {.username = ADMIN_USERNAME, .password = ADMIN_PASSWO
 
 static const struct user registered_users[MAX_USER_NUM] = {NULL};
 
-static int registered_users_count = 1;
-
 void init_user_list(void)
 {
     // first pointer for user list(right after administrator)
@@ -29,7 +27,6 @@ void init_user_list(void)
         memcpy(userlist_tail->next_user, ptr, sizeof(struct user));
         userlist_tail = userlist_tail->next_user;
         userlist_tail->next_user = NULL;
-        registered_users_count++;
     }
 }
 
@@ -186,3 +183,5 @@ void stack_sort_list(struct user **ptr)
         }
     }
 }
+
+// TODO: add save/load functions for lib
