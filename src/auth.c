@@ -12,22 +12,53 @@
 #define ADMIN_PASSWORD "admin"
 #endif
 
-static struct user admin = {.username = ADMIN_USERNAME, .password = ADMIN_PASSWORD, .next_user = NULL};
+static struct user admin = {0};
 
 static const struct user registered_users[MAX_USER_NUM] = {NULL};
 
-void init_user_list(void)
+int registered_users_count = 0;
+
+int init_user_list(void)
 {
+    int result = AUTH_RESULT_OK;
+    // init admin struct
+    admin.username = strdup(ADMIN_USERNAME);
+    admin.password = strdup(ADMIN_PASSWORD);
+    if ((admin.username == NULL) || (admin.password == NULL))
+    {
+        result = AUTH_RESULT_MALLOC_FAILED;
+        return result;
+    }
+    admin.next_user = NULL;
     // first pointer for user list(right after administrator)
     userlist_head = &admin;
     userlist_tail = userlist_head;
+    // first incremet for admin
+    registered_users_count++;
     for (struct user *ptr = registered_users; (ptr != NULL) && (ptr < (register_user + MAX_USER_NUM)); ptr++)
     {
         userlist_tail->next_user = (struct user *)malloc(sizeof(struct user));
-        memcpy(userlist_tail->next_user, ptr, sizeof(struct user));
+        if (userlist_tail->next_user == NULL)
+        {
+            result = AUTH_RESULT_MALLOC_FAILED;
+            return result;
+        }
+
         userlist_tail = userlist_tail->next_user;
+        userlist_tail->username = strdup(ptr->username);
+        userlist_tail->password = strdup(ptr->password);
+        if ((userlist_tail->username == NULL) || (userlist_tail->password == NULL))
+        {
+            result = AUTH_RESULT_MALLOC_FAILED;
+            return result;
+        }
+        
         userlist_tail->next_user = NULL;
+        registered_users_count++;
     }
+    // sort list
+    stack_sort_list(&userlist_head);
+    return result;
 }
 
 struct user *find_user_in_list(char *username)
@@ -50,19 +81,69 @@ struct user *find_user_in_list(char *username)
 bool validate_password(struct user *userptr, char *password)
 {
     bool result = false;
-#if defined(AUTH_PASSWORD_NO_ENCRYPTION)
+#if !defined(AUTH_PASSWORD_ENCRYPTION)
     result = !strcmp(userptr->password, password);
+#else
 #endif // AUTH_PASSWORD_NO_ENCRYPTION
     return result;
 }
 
-bool validate_user_password(char *username, char *password)
+int validate_user_password(char *username, char *password)
 {
-    bool result = false;
+    int result = AUTH_RESULT_OK;
     struct user *ptr = find_user_in_list(username);
     if (ptr != NULL)
     {
-        result = validate_password(ptr, password);
+        result = (validate_password(ptr, password) ? AUTH_RESULT_OK : AUTH_OPERATION_NOT_PERMITED);
+    }
+    else
+    {
+        result = AUTH_USER_NOT_FOUND;
+    }
+    return result;
+}
+
+int change_user_pass_by_handle(struct user *huser, char *new_pass)
+{
+    int result = (huser != &admin)
+                     ? AUTH_RESULT_OK
+                     : AUTH_OPERATION_NOT_PERMITED;
+    if (result == AUTH_RESULT_OK)
+    {
+        free(huser->password);
+        huser->password = strdup(new_pass);
+        if (huser->password == NULL)
+        {
+            result = AUTH_RESULT_MALLOC_FAILED;
+        }
+    }
+    return result;
+}
+
+int change_user_pass_by_username(char *username, char *new_pass)
+{
+    int result = (strcmp(username, admin.username)) ? AUTH_RESULT_OK : AUTH_OPERATION_NOT_PERMITED;
+    if (result == AUTH_RESULT_OK)
+    {
+        struct user *huser = find_user_in_list(username);
+        free(huser->password);
+        huser->password = strdup(new_pass);
+        if (huser->password == NULL)
+        {
+            result = AUTH_RESULT_MALLOC_FAILED;
+        }
+    }
+    return result;
+}
+
+int change_admin_pass(char *new_pass, char *confirmation)
+{
+    int result = AUTH_RESULT_OK;
+    result = (validate_password(&admin, confirmation) ? AUTH_RESULT_OK : AUTH_PASS_VALIDATION_FAILED);
+    if (result == AUTH_RESULT_OK)
+    {
+        free(admin.password);
+        admin.password = strdup(new_pass);
     }
     return result;
 }

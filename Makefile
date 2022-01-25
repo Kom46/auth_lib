@@ -5,10 +5,14 @@
 # 4. run 'make dirmake' before calling 'make'
 
 TARGET = libauth
+TOOLCHAIN_PATH =
+PREFIX =
+ifeq ($(PLATFORM), arm-none)
 TOOLCHAIN_PATH = /opt/toolchains/gcc-arm-none-eabi-10.3-2021.10/bin
-PREFIX = arm-none-eabi-
-CC = $(TOOLCHAIN_PATH)/$(PREFIX)gcc
-AR = $(TOOLCHAIN_PATH)/$(PREFIX)ar
+PREFIX = $(TOOLCHAIN_PATH)/arm-none-eabi-
+endif
+CC = $(PREFIX)gcc
+AR = $(PREFIX)ar
 OUTPUT = $(TARGET).a
 
 CFLAGS= -fPIC -O0 -g -Wall -c -fpermissive
@@ -19,36 +23,36 @@ INC = -I$(INC_DIR)
 
 OBJ_DIR = ./obj
 OUT_DIR = ./lib
-DEPS_DIR= ./deps
 
 SRC = $(wildcard $(SRC_DIR)/*.c)
 TEST = $(wildcard $(TEST_DIR)/*.c)
-DEPS = $(SRC:.c,.o)
-DEPS += $(TEST:.c,.o)
+DEPS = $(patsubst %.c,%.d, $(SRC))
+DEPS += $(patsubst %.c,%.d, $(TEST))
+-include $(DEPS)
 
 OBJS := $(patsubst %.c,%.o, $(SRC))
 TEST_OBJS := $(patsubst %.c,%.o, $(TESTS))
 
-
-all: | $(OUTPUT) tests
+all: $(OUTPUT) tests
 
 $(OUTPUT): $(OBJS)
 	@echo $(SRC)
 	@echo $(OBJS)
+	@echo $(DEPS)
 	$(AR) -r -o $(OUT_DIR)/$@ $^
 
 
 
 %.o: %.c dirmake
+	$(CC) $(INC) $(CFLAGS) -MM -MT $@ -MF $(patsubst %.o,%.d,$@) $<
 	$(CC) -c $(INC) $(CFLAGS) -o $@  $<
 
-%.c:
 dirmake:
 	@mkdir -p $(OUT_DIR)
 	@mkdir -p $(OBJ_DIR)
 	
 clean:
-	rm -f $(OBJ_DIR)/* $(OUT_DIR)/$(OUTPUT) Makefile.bak
+	rm -f $(OBJS) $(DEPS) $(OUT_DIR)/$(OUTPUT) Makefile.bak
 
 rebuild: clean all
 

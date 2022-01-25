@@ -7,11 +7,11 @@
 #include <stdlib.h>
 
 #ifndef MIN
-#define MIN(a,b) ((a) < (b) ? (a) : (b))
+#define MIN(a, b) ((a) < (b) ? (a) : (b))
 #endif
 
 #ifndef MAX
-#define MAX(a,b) ((a) > (b) ? (a) : (b)) 
+#define MAX(a, b) ((a) > (b) ? (a) : (b))
 #endif
 
 enum AUTH_RESULT_CODE
@@ -19,7 +19,10 @@ enum AUTH_RESULT_CODE
     AUTH_RESULT_OK,
     AUTH_RESULT_ERROR = -1,
     AUTH_RESULT_USER_LIMIT_EXECEED = -2,
-    AUTH_RESULT_MALLOC_FAILED
+    AUTH_RESULT_MALLOC_FAILED,
+    AUTH_PASS_VALIDATION_FAILED,
+    AUTH_USER_NOT_FOUND,
+    AUTH_OPERATION_NOT_PERMITED
 };
 
 static struct user
@@ -27,24 +30,80 @@ static struct user
     char *username;
     char *password;
     struct user *next_user;
-} *userlist_head, *userlist_tail;
+} * userlist_head, *userlist_tail;
 
-// load registered users
-void load_registered_users(void);
-// initialize user list
-void init_user_list(void);
-// find user in list
+/**
+ * @brief function for user list initialization
+ * 
+ * @return result code in enum AUTH_RESULT_CODE
+ */
+int init_user_list(void);
+/**
+ * @brief function for finding user in user list
+ * 
+ * @param username[in] username for search
+ * @return user handle struct user*
+ */
 struct user *find_user_in_list(char *username);
-// validate password in user struct
+/**
+ * @brief validate user pass for operation permitions
+ * 
+ * @param userptr[in] user handle
+ * @param pass[in] user pass
+ * @return true if validation succeed
+ * @return false if validation failed
+ */
 bool validate_pass(struct user *userptr, char *pass);
-// validate pass with given username and password
-bool validate_user_pass(char *username, char *pass);
-// register user
+/**
+ * @brief validate password by username
+ * 
+ * @param username[in] username for searching user in user list
+ * @param pass[in] password for validation
+ * @return result code in enum AUTH_RESULT_CODE 
+ */
+int validate_user_pass(char *username, char *pass);
+/**
+ * @brief register user in system
+ * 
+ * @param username[in] username for new user
+ * @param pass[in] pass for new user
+ * @return result code in enum AUTH_RESULT_CODE
+ */
 int register_user(char *username, char *pass);
-// delete user by user
+/**
+ * @brief delete user from list
+ * 
+ * @param username[in] username for user to delete
+ */
 void delete_user(char *username);
-//  2 users alphabetic sort username
-struct user *user_alphabetic_sort(struct user *ptr1, struct user *ptr2);
-// sort linked list(user list)
+/**
+ * @brief sort linked list function
+ * @details sorts linked list in alphabetic order with degradated lists method
+ * @param ptr[in] pointer from sorting started(interpret in function as list head)
+ */
 void stack_sort_list(struct user **ptr);
+/**
+ * @brief change user pass by it's handle
+ * 
+ * @param huser[in] user handle
+ * @param new_pass[in] new pass for user
+ * @return result code in enum AUTH_RESULT_CODE
+ */
+int change_user_pass_by_handle(struct user *huser, char *new_pass);
+/**
+ * @brief change user pass by username
+ * 
+ * @param username[in] username of user
+ * @param new_pass[in] new pass for user
+ * @return result code in enum AUTH_RESULT_CODE
+ */
+int change_user_pass_by_username(char *username, char *new_pass);
+/**
+ * @brief change admin password
+ * 
+ * @param new_pass[in] new pass for admin
+ * @param confirmation[in] old pass of admin user for confirmation
+ * @return result code in enum AUTH_RESULT_CODE
+ */
+int change_admin_pass(char *new_pass, char *confirmation);
 #endif
