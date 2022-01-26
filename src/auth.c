@@ -1,8 +1,9 @@
 #include "auth.h"
+#include "platform_depended.h"
 
-#ifndef MAX_USER_NUM
-#define MAX_USER_NUM 128
-#endif
+#include <string.h>
+#include <assert.h>
+#include <stdlib.h>
 
 #ifndef ADMIN_USERNAME
 #define ADMIN_USERNAME "admin"
@@ -12,51 +13,118 @@
 #define ADMIN_PASSWORD "admin"
 #endif
 
-static struct user admin = {0};
+#ifndef DEF_USER_USERNAME
+#define DEF_USER_USERNAME "user"
+#endif
 
-static const struct user registered_users[MAX_USER_NUM] = {NULL};
+#ifndef DEF_USER_PASSWORD
+#define DEF_USER_PASSWORD "user"
+#endif
 
+static struct user *admin;
 int registered_users_count = 0;
+
+struct user *load_users(void)
+{
+    struct user *result = NULL;
+    struct user list_buff[MAX_USER_NUM] = {0}, reference_struct = {0};
+    load_buff_from_volatile_mem((void *)0, (void *)list_buff, sizeof(struct user) * MAX_USER_NUM);
+    struct user *ptr = list_buff, *tmp = result;
+    for (size_t i = 0; i < MAX_USER_NUM; i++)
+    {
+        if (!memcmp(ptr, &reference_struct, sizeof(struct user)))
+        {
+            // if we are here, data in ptr are zero
+            break;
+        }
+        tmp = (struct user *)malloc(sizeof(struct user));
+        if (tmp == NULL)
+        {
+            break;
+        }
+        // tmp->username = strdup(ptr->username);
+        // tmp->password = strdup(ptr->password);
+        strcpy(tmp->username, ptr->username);
+        strcpy(tmp->password, ptr->password);
+        tmp->next_user = NULL;
+        tmp = tmp->next_user;
+    }
+
+    return result;
+}
+
+int save_users(const struct user *head)
+{
+    int result = AUTH_RESULT_OK;
+    struct user list_buff[MAX_USER_NUM] = {0};
+    struct user *ptr = userlist_head;
+    for (size_t i = 0; i < MAX_USER_NUM; i++)
+    {
+        if (ptr != NULL)
+        {
+            // fill array
+            memcpy(&list_buff[i], ptr, sizeof(struct user));
+            ptr = ptr->next_user;
+        }
+        else
+        {
+            // we go to the end of list
+            break;
+        }
+    }
+    save_buff_to_volatile_mem((void *)list_buff, sizeof(struct user) * MAX_USER_NUM);
+}
+
+static struct user *allocate_default_users(void)
+{
+    struct user *result = (struct user *)malloc(sizeof(struct user));
+    if (result != NULL)
+    {
+        // result->username = strdup(ADMIN_USERNAME);
+        // result->password = strdup(ADMIN_PASSWORD);
+        strcpy(result->username, ADMIN_USERNAME);
+        strcpy(result->password, ADMIN_PASSWORD);
+        result->next_user = (struct user *)malloc(sizeof(struct user));
+        if (result->next_user != NULL)
+        {
+            // result->next_user->username = strdup(DEF_USER_USERNAME);
+            // result->next_user->password = strdup(DEF_USER_PASSWORD);
+            strcpy(result->next_user->username, DEF_USER_USERNAME);
+            strcpy(result->next_user->password, DEF_USER_PASSWORD);
+            result->next_user->next_user = NULL;
+        }
+    }
+
+    return result;
+}
 
 int init_user_list(void)
 {
     int result = AUTH_RESULT_OK;
-    // init admin struct
-    admin.username = strdup(ADMIN_USERNAME);
-    admin.password = strdup(ADMIN_PASSWORD);
-    if ((admin.username == NULL) || (admin.password == NULL))
+    userlist_head = load_users;
+    if (userlist_head == NULL)
     {
-        result = AUTH_RESULT_MALLOC_FAILED;
-        return result;
+        userlist_head = allocate_default_users();
     }
-    admin.next_user = NULL;
-    // first pointer for user list(right after administrator)
-    userlist_head = &admin;
-    userlist_tail = userlist_head;
-    // first incremet for admin
-    registered_users_count++;
-    for (struct user *ptr = registered_users; (ptr != NULL) && (ptr < (register_user + MAX_USER_NUM)); ptr++)
+    if (userlist_head == NULL)
     {
-        userlist_tail->next_user = (struct user *)malloc(sizeof(struct user));
-        if (userlist_tail->next_user == NULL)
-        {
-            result = AUTH_RESULT_MALLOC_FAILED;
-            return result;
-        }
+        return AUTH_RESULT_MALLOC_FAILED;
+    }
 
+    userlist_tail = userlist_head;
+    registered_users_count++;
+    // find tail
+    while (userlist_tail->next_user != NULL)
+    {
         userlist_tail = userlist_tail->next_user;
-        userlist_tail->username = strdup(ptr->username);
-        userlist_tail->password = strdup(ptr->password);
-        if ((userlist_tail->username == NULL) || (userlist_tail->password == NULL))
-        {
-            result = AUTH_RESULT_MALLOC_FAILED;
-            return result;
-        }
-        
-        userlist_tail->next_user = NULL;
         registered_users_count++;
     }
-    // sort list
+    // if we do not have admin in user list
+    if ((admin = find_user_in_list(ADMIN_USERNAME)) == NULL)
+    {
+        register_user(ADMIN_USERNAME, ADMIN_PASSWORD);
+        registered_users_count++;
+    }
     stack_sort_list(&userlist_head);
     return result;
 }
@@ -94,11 +162,11 @@ int validate_user_password(char *username, char *password)
     struct user *ptr = find_user_in_list(username);
     if (ptr != NULL)
     {
-        result = (validate_password(ptr, password) ? AUTH_RESULT_OK : AUTH_OPERATION_NOT_PERMITED);
+        result = (validate_password(ptr, password) ? AUTH_RESULT_OK : AUTH_RESULT_OPERATION_NOT_PERMITED);
     }
     else
     {
-        result = AUTH_USER_NOT_FOUND;
+        result = AUTH_RESULT_USER_NOT_FOUND;
     }
     return result;
 }
@@ -107,31 +175,33 @@ int change_user_pass_by_handle(struct user *huser, char *new_pass)
 {
     int result = (huser != &admin)
                      ? AUTH_RESULT_OK
-                     : AUTH_OPERATION_NOT_PERMITED;
+                     : AUTH_RESULT_OPERATION_NOT_PERMITED;
     if (result == AUTH_RESULT_OK)
     {
-        free(huser->password);
-        huser->password = strdup(new_pass);
-        if (huser->password == NULL)
-        {
-            result = AUTH_RESULT_MALLOC_FAILED;
-        }
+        // free(huser->password);
+        // huser->password = strdup(new_pass);
+        strcpy(huser->password, new_pass);
+        // if (huser->password == NULL)
+        // {
+        //     result = AUTH_RESULT_MALLOC_FAILED;
+        // }
     }
     return result;
 }
 
 int change_user_pass_by_username(char *username, char *new_pass)
 {
-    int result = (strcmp(username, admin.username)) ? AUTH_RESULT_OK : AUTH_OPERATION_NOT_PERMITED;
+    int result = (strcmp(username, admin->username)) ? AUTH_RESULT_OK : AUTH_RESULT_OPERATION_NOT_PERMITED;
     if (result == AUTH_RESULT_OK)
     {
         struct user *huser = find_user_in_list(username);
-        free(huser->password);
-        huser->password = strdup(new_pass);
-        if (huser->password == NULL)
-        {
-            result = AUTH_RESULT_MALLOC_FAILED;
-        }
+        // free(huser->password);
+        // huser->password = strdup(new_pass);
+        // if (huser->password == NULL)
+        // {
+        //     result = AUTH_RESULT_MALLOC_FAILED;
+        // }
+        strcpy(huser->password, new_pass);
     }
     return result;
 }
@@ -139,11 +209,16 @@ int change_user_pass_by_username(char *username, char *new_pass)
 int change_admin_pass(char *new_pass, char *confirmation)
 {
     int result = AUTH_RESULT_OK;
-    result = (validate_password(&admin, confirmation) ? AUTH_RESULT_OK : AUTH_PASS_VALIDATION_FAILED);
+    result = (validate_password(&admin, confirmation) ? AUTH_RESULT_OK : AUTH_RESULT_PASS_VALIDATION_FAILED);
     if (result == AUTH_RESULT_OK)
     {
-        free(admin.password);
-        admin.password = strdup(new_pass);
+        // free(admin->password);
+        // admin->password = strdup(new_pass);
+        // if (admin->password == NULL)
+        // {
+        //     result = AUTH_RESULT_MALLOC_FAILED;
+        // }
+        strcpy(admin->password, new_pass);
     }
     return result;
 }
@@ -151,7 +226,8 @@ int change_admin_pass(char *new_pass, char *confirmation)
 int register_user(char *username, char *password)
 {
     int result = AUTH_RESULT_OK;
-    if (!((registered_users_count + 1) >= MAX_USER_NUM))
+
+    if ((registered_users_count + 1) >= MAX_USER_NUM)
     {
         return AUTH_RESULT_USER_LIMIT_EXECEED;
     }
@@ -160,15 +236,40 @@ int register_user(char *username, char *password)
     {
         ptr = ptr->next_user;
     }
-    ptr->next_user = (struct user *)malloc(sizeof(struct user));
+    if (!strcmp(username, ADMIN_USERNAME) && (admin != NULL))
+    {
+        // we cant register admin twice
+        return AUTH_RESULT_OPERATION_NOT_PERMITED;
+    }
+    else
+    {
+        ptr->next_user = (struct user *)malloc(sizeof(struct user));
+    }
     if (ptr->next_user == NULL)
     {
         return AUTH_RESULT_MALLOC_FAILED;
     }
-    ptr->next_user->username = strdup(username);
-    ptr->next_user->password = strdup(password);
+    else
+    {
+        if (!strcmp(username, ADMIN_USERNAME))
+        {
+            // change pointer to admin
+            admin = ptr->next_user;
+        }
+    }
+
+    // ptr->next_user->username = strdup(username);
+    // ptr->next_user->password = strdup(password);
+    strcpy(ptr->next_user->username, username);
+    strcpy(ptr->next_user->password, password);
     ptr->next_user->next_user = NULL;
     userlist_tail = ptr->next_user;
+    // if we register admin
+    if (!strcmp(username, ADMIN_USERNAME))
+    {
+        admin = ptr;
+    }
+
     return result;
 }
 
@@ -209,15 +310,11 @@ struct user *user_alphabetic_sort(struct user *ptr1, struct user *ptr2)
     ptr2->next_user = NULL;
     char *username_ptr1 = strlwr(strdup(ptr1->username));
     char *username_ptr2 = strlwr(strdup(ptr2->username));
-    for (int i = 0; i < MIN(strlen(ptr1->username), strlen(ptr2->username)); i++)
+    if (strcmp(username_ptr1, username_ptr2) < 0)
     {
-        if (username_ptr1[i] < username_ptr2[i])
-        {
-            ptr2->next_user = ptr1;
-            result = ptr2;
-            break;
-        }
-    };
+        ptr2->next_user = ptr1;
+        result = ptr2;
+    }
     free(username_ptr1);
     free(username_ptr2);
     return result;
@@ -264,5 +361,3 @@ void stack_sort_list(struct user **ptr)
         }
     }
 }
-
-// TODO: add save/load functions for lib

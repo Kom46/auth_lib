@@ -2,9 +2,6 @@
 #define __AUTH_H__
 
 #include <stdbool.h>
-#include <string.h>
-#include <assert.h>
-#include <stdlib.h>
 
 #ifndef MIN
 #define MIN(a, b) ((a) < (b) ? (a) : (b))
@@ -14,24 +11,35 @@
 #define MAX(a, b) ((a) > (b) ? (a) : (b))
 #endif
 
+#ifndef MAX_USER_NUM
+#define MAX_USER_NUM 128
+#endif
+
+#ifndef MAX_USERNAME_LEN
+#define MAX_USERNAME_LEN 8
+#endif
+
+#ifndef MAX_PASSWORD_LEN
+#define MAX_PASSWORD_LEN 8
+#endif
+
 enum AUTH_RESULT_CODE
 {
     AUTH_RESULT_OK,
     AUTH_RESULT_ERROR = -1,
     AUTH_RESULT_USER_LIMIT_EXECEED = -2,
     AUTH_RESULT_MALLOC_FAILED,
-    AUTH_PASS_VALIDATION_FAILED,
-    AUTH_USER_NOT_FOUND,
-    AUTH_OPERATION_NOT_PERMITED
+    AUTH_RESULT_PASS_VALIDATION_FAILED,
+    AUTH_RESULT_USER_NOT_FOUND,
+    AUTH_RESULT_OPERATION_NOT_PERMITED
 };
 
-static struct user
+struct user
 {
-    char *username;
-    char *password;
+    char username[MAX_USERNAME_LEN];
+    char password[MAX_PASSWORD_LEN];
     struct user *next_user;
-} * userlist_head, *userlist_tail;
-
+} *userlist_head = NULL, *userlist_tail = NULL;
 /**
  * @brief function for user list initialization
  * 
@@ -106,4 +114,8 @@ int change_user_pass_by_username(char *username, char *new_pass);
  * @return result code in enum AUTH_RESULT_CODE
  */
 int change_admin_pass(char *new_pass, char *confirmation);
+
+struct user * load_users(void);
+
+int save_users(const struct user *head);
 #endif
