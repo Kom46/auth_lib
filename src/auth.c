@@ -28,7 +28,7 @@ struct user *load_users(void)
 {
     struct user *result = NULL;
     struct user list_buff[MAX_USER_NUM] = {0}, reference_struct = {0};
-    load_buff_from_volatile_mem((void *)0, (void *)list_buff, sizeof(struct user) * MAX_USER_NUM);
+    load_buff_from_volatile_mem((void *)list_buff, sizeof(struct user) * MAX_USER_NUM);
     struct user *ptr = list_buff, *tmp = result;
     for (size_t i = 0; i < MAX_USER_NUM; i++)
     {
@@ -44,8 +44,7 @@ struct user *load_users(void)
         }
         // tmp->username = strdup(ptr->username);
         // tmp->password = strdup(ptr->password);
-        strcpy(tmp->username, ptr->username);
-        strcpy(tmp->password, ptr->password);
+        memcpy(tmp, ptr, sizeof(struct user));
         tmp->next_user = NULL;
         tmp = tmp->next_user;
     }
@@ -73,6 +72,7 @@ int save_users(const struct user *head)
         }
     }
     save_buff_to_volatile_mem((void *)list_buff, sizeof(struct user) * MAX_USER_NUM);
+    return result;
 }
 
 static struct user *allocate_default_users(void)
@@ -173,7 +173,7 @@ int validate_user_password(char *username, char *password)
 
 int change_user_pass_by_handle(struct user *huser, char *new_pass)
 {
-    int result = (huser != &admin)
+    int result = (huser != admin)
                      ? AUTH_RESULT_OK
                      : AUTH_RESULT_OPERATION_NOT_PERMITED;
     if (result == AUTH_RESULT_OK)
@@ -209,7 +209,7 @@ int change_user_pass_by_username(char *username, char *new_pass)
 int change_admin_pass(char *new_pass, char *confirmation)
 {
     int result = AUTH_RESULT_OK;
-    result = (validate_password(&admin, confirmation) ? AUTH_RESULT_OK : AUTH_RESULT_PASS_VALIDATION_FAILED);
+    result = (validate_password(admin, confirmation) ? AUTH_RESULT_OK : AUTH_RESULT_PASS_VALIDATION_FAILED);
     if (result == AUTH_RESULT_OK)
     {
         // free(admin->password);
@@ -290,7 +290,7 @@ void delete_user(char *username)
     }
 }
 
-struct sort_stack_item
+static struct sort_stack_item
 {
     int level;
     struct user *ptr;

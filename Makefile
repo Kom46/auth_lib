@@ -16,18 +16,31 @@ AR = $(PREFIX)ar
 OUTPUT = $(TARGET).a
 
 CFLAGS= -fPIC -O0 -g -Wall -c -fpermissive
+DEFINES = 
+
 INC_DIR = inc
-SRC_DIR = src
+SRC_DIRS = src
 TEST_DIR = test
-INC = -I$(INC_DIR)
 
 OBJ_DIR = ./obj
 OUT_DIR = ./lib
 
-SRC = $(wildcard $(SRC_DIR)/*.c)
+ifeq ($(OS), FREERTOS)
+DEFINES += FREERTOS
+endif
+
+ifeq ($(TARGET_MEMORY), W25QXX)
+INC_DIR += middlewares/w25qxx
+SRC_DIRS += middlewares/w25qxx
+DEFINES += W25QXX_FLASH
+endif
+
+INC = $(addprefix -I, $(INC_DIR))
+SRC = $(foreach dir, $(SRC_DIRS), $(wildcard $(dir)/*.c))
 TEST = $(wildcard $(TEST_DIR)/*.c)
 DEPS = $(patsubst %.c,%.d, $(SRC))
 DEPS += $(patsubst %.c,%.d, $(TEST))
+DEFS = $(addprefix -D,  $(DEFINES))
 -include $(DEPS)
 
 OBJS := $(patsubst %.c,%.o, $(SRC))
@@ -39,13 +52,14 @@ $(OUTPUT): $(OBJS)
 	@echo $(SRC)
 	@echo $(OBJS)
 	@echo $(DEPS)
+	@echo $(DEFS)
 	$(AR) -r -o $(OUT_DIR)/$@ $^
 
 
 
 %.o: %.c dirmake
-	$(CC) $(INC) $(CFLAGS) -MM -MT $@ -MF $(patsubst %.o,%.d,$@) $<
-	$(CC) -c $(INC) $(CFLAGS) -o $@  $<
+	$(CC) $(DEFS) $(INC) $(CFLAGS) -MM -MT $@ -MF $(patsubst %.o,%.d,$@) $<
+	$(CC) -c $(DEFS) $(INC) $(CFLAGS) -o $@  $<
 
 dirmake:
 	@mkdir -p $(OUT_DIR)

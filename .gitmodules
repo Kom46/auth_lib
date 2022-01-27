@@ -1,0 +1,6 @@
+[submodule "middlewares"]
+	path = middlewares
+	url = git@github.com:Kom46/w25qxx.git
+[submodule "middlewares/w25qxx"]
+	path = middlewares/w25qxx
+	url = git@github.com:Kom46/w25qxx.git
