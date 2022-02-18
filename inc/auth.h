@@ -24,6 +24,26 @@
 #define MAX_PASSWORD_LEN 8
 #endif
 
+#ifndef DEF_USER_NUM
+#define DEF_USER_NUM 1
+#endif
+
+#ifndef ADMIN_USERNAME
+#define ADMIN_USERNAME "admin"
+#endif
+
+#ifndef ADMIN_PASSWORD
+#define ADMIN_PASSWORD "admin"
+#endif
+
+#ifndef DEF_USER_USERNAME
+#define DEF_USER_USERNAME "user"
+#endif
+
+#ifndef DEF_USER_PASSWORD
+#define DEF_USER_PASSWORD "user"
+#endif
+
 enum AUTH_RESULT_CODE
 {
     AUTH_RESULT_OK,
@@ -32,6 +52,7 @@ enum AUTH_RESULT_CODE
     AUTH_RESULT_MALLOC_FAILED,
     AUTH_RESULT_PASS_VALIDATION_FAILED,
     AUTH_RESULT_USER_NOT_FOUND,
+    AUTH_RESULT_USER_ALREADY_EXIST,
     AUTH_RESULT_OPERATION_NOT_PERMITED
 };
 
@@ -40,7 +61,7 @@ struct user
     char username[MAX_USERNAME_LEN];
     char password[MAX_PASSWORD_LEN];
     struct user *next_user;
-} *userlist_head = NULL, *userlist_tail = NULL;
+};
 /**
  * @brief function for user list initialization
  * 
@@ -119,4 +140,12 @@ int change_admin_pass(char *new_pass, char *confirmation);
 struct user * load_users(void);
 
 int save_users(const struct user *head);
+
+#ifdef TEST
+struct user * get_admin_user(void);
+struct user * get_userlist_head(void);
+struct user * get_userlist_tail(void);
+void print_user_list(void);
+#endif
+
 #endif

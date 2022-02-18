@@ -1,0 +1,7 @@
+---
+src/auth.c:
+- TEST
+build/test/mocks/mock_rules.c:
+- TEST
+src/platform_depended.c:
+- TEST

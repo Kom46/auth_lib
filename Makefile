@@ -1,5 +1,5 @@
 #  Makefile template for Static library. 
-# 1. Compile every *.cpp in the folder 
+# 1. Compile every *.c in the folder 
 # 2. All obj files under obj folder
 # 3. static library .a at lib folder
 # 4. run 'make dirmake' before calling 'make'
@@ -29,12 +29,6 @@ ifeq ($(OS), FREERTOS)
 DEFINES += FREERTOS
 endif
 
-ifeq ($(TARGET_MEMORY), W25QXX)
-INC_DIR += middlewares/w25qxx
-SRC_DIRS += middlewares/w25qxx
-DEFINES += W25QXX_FLASH
-endif
-
 INC = $(addprefix -I, $(INC_DIR))
 SRC = $(foreach dir, $(SRC_DIRS), $(wildcard $(dir)/*.c))
 TEST = $(wildcard $(TEST_DIR)/*.c)
@@ -44,15 +38,10 @@ DEFS = $(addprefix -D,  $(DEFINES))
 -include $(DEPS)
 
 OBJS := $(patsubst %.c,%.o, $(SRC))
-TEST_OBJS := $(patsubst %.c,%.o, $(TESTS))
 
-all: $(OUTPUT) tests
+all: $(OUTPUT) test
 
 $(OUTPUT): $(OBJS)
-	@echo $(SRC)
-	@echo $(OBJS)
-	@echo $(DEPS)
-	@echo $(DEFS)
 	$(AR) -r -o $(OUT_DIR)/$@ $^
 
 
@@ -69,5 +58,3 @@ clean:
 	rm -f $(OBJS) $(DEPS) $(OUT_DIR)/$(OUTPUT) Makefile.bak
 
 rebuild: clean all
-
-tests: | $(OUTPUT) $(TEST_OBJS)

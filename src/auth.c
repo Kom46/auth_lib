@@ -4,25 +4,12 @@
 #include <string.h>
 #include <assert.h>
 #include <stdlib.h>
-
-#ifndef ADMIN_USERNAME
-#define ADMIN_USERNAME "admin"
-#endif
-
-#ifndef ADMIN_PASSWORD
-#define ADMIN_PASSWORD "admin"
-#endif
-
-#ifndef DEF_USER_USERNAME
-#define DEF_USER_USERNAME "user"
-#endif
-
-#ifndef DEF_USER_PASSWORD
-#define DEF_USER_PASSWORD "user"
-#endif
+#include <stdio.h>
 
 static struct user *admin;
 int registered_users_count = 0;
+
+static struct user *userlist_head = NULL, *userlist_tail = NULL;
 
 struct user *load_users(void)
 {
@@ -48,7 +35,6 @@ struct user *load_users(void)
         tmp->next_user = NULL;
         tmp = tmp->next_user;
     }
-
     return result;
 }
 
@@ -101,18 +87,16 @@ static struct user *allocate_default_users(void)
 int init_user_list(void)
 {
     int result = AUTH_RESULT_OK;
-    userlist_head = load_users;
+    userlist_head = load_users();
     if (userlist_head == NULL)
     {
-        userlist_head = allocate_default_users();
-    }
-    if (userlist_head == NULL)
-    {
-        return AUTH_RESULT_MALLOC_FAILED;
+        if ((userlist_head = allocate_default_users()) == NULL)
+        {
+            return AUTH_RESULT_MALLOC_FAILED;
+        }
     }
 
     userlist_tail = userlist_head;
-    registered_users_count++;
     // find tail
     while (userlist_tail->next_user != NULL)
     {
@@ -125,17 +109,19 @@ int init_user_list(void)
         register_user(ADMIN_USERNAME, ADMIN_PASSWORD);
         registered_users_count++;
     }
-    stack_sort_list(&userlist_head);
+    // stack_sort_list(&userlist_head);
     return result;
 }
 
 struct user *find_user_in_list(char *username)
 {
+    struct user *result = NULL;
     struct user *ptr = userlist_head;
     while (ptr != NULL)
     {
         if (!strcmp(ptr->username, username))
         {
+            result = ptr;
             break;
         }
         else
@@ -143,7 +129,7 @@ struct user *find_user_in_list(char *username)
             ptr = ptr->next_user;
         }
     }
-    return ptr;
+    return result;
 }
 
 bool validate_password(struct user *userptr, char *password)
@@ -231,6 +217,11 @@ int register_user(char *username, char *password)
     {
         return AUTH_RESULT_USER_LIMIT_EXECEED;
     }
+    if (find_user_in_list(username) != NULL)
+    {
+        return AUTH_RESULT_USER_ALREADY_EXIST;
+    }
+    
     struct user *ptr = userlist_tail;
     while (ptr->next_user != NULL)
     {
@@ -269,7 +260,7 @@ int register_user(char *username, char *password)
     {
         admin = ptr;
     }
-
+    // stack_sort_list(&userlist_head);
     return result;
 }
 
@@ -304,12 +295,12 @@ struct user *user_alphabetic_sort(struct user *ptr1, struct user *ptr2)
     {
         return result;
     }
-    //default result
+    // default result
     result = ptr1;
     ptr1->next_user = NULL;
     ptr2->next_user = NULL;
-    char *username_ptr1 = strlwr(strdup(ptr1->username));
-    char *username_ptr2 = strlwr(strdup(ptr2->username));
+    char *username_ptr1 = strdup(ptr1->username);
+    char *username_ptr2 = strdup(ptr2->username);
     if (strcmp(username_ptr1, username_ptr2) < 0)
     {
         ptr2->next_user = ptr1;
@@ -319,6 +310,7 @@ struct user *user_alphabetic_sort(struct user *ptr1, struct user *ptr2)
     free(username_ptr2);
     return result;
 }
+// TODO: Fix sorting function
 // sort user list from ptr
 void stack_sort_list(struct user **ptr)
 {
@@ -354,10 +346,37 @@ void stack_sort_list(struct user **ptr)
     if (sort_stack_pos > 0)
     {
         *ptr = sort_stack[0].ptr;
-        userlist_tail = (*ptr)->next_user;
-        while (userlist_tail->next_user != NULL)
+        for (struct user *tmp = (*ptr)->next_user; tmp != NULL;
+                                            tmp = tmp->next_user)
         {
-            userlist_tail = userlist_tail->next_user;
+            userlist_tail = tmp;
         }
+    }
+}
+
+struct user *get_admin_user(void)
+{
+    return admin;
+}
+
+struct user *get_userlist_head(void)
+{
+    return userlist_head;
+}
+
+struct user *get_userlist_tail(void)
+{
+    return userlist_tail;
+}
+
+void print_user_list(void)
+{
+    struct user *ptr = userlist_head;
+    if (ptr == NULL)
+        return;
+    for (struct user *ptr = userlist_head; ptr != NULL; ptr = ptr->next_user)
+    {
+        printf("user:%s\tpassword:%s\tpointer:%p\n", ptr->username,
+               ptr->password, ptr);
     }
 }

@@ -12,7 +12,9 @@
 #endif
 #endif
 
+// must be defined by library user
 int save_buff_to_volatile_mem(void *ptr, size_t size);
+// must be defined by library user 
 int load_buff_from_volatile_mem(void *ptr, size_t size);
 
 #endif

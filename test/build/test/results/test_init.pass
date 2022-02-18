@@ -1,0 +1,23 @@
+---
+:source:
+  :path: test
+  :file: test_init.c
+:successes:
+- :test: test_init
+  :line: 14
+  :message: ''
+  :unity_test_time: 0
+:failures: []
+:ignores: []
+:counts:
+  :total: 1
+  :passed: 1
+  :failed: 0
+  :ignored: 0
+:stdout:
+- "user:admin\tpassword:admin\tpointer:0x564988b80260"
+- "user:user\tpassword:user\tpointer:0x564988b80280"
+- "user:xyz\tpassword:xyz\tpointer:0x564988b802a0"
+- "user:abc\tpassword:abc\tpointer:0x564988b802c0"
+- "user:bcd\tpassword:bcd\tpointer:0x564988b802e0"
+:time: 0.0009586610030964948
