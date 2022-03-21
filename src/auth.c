@@ -148,7 +148,8 @@ int validate_user_password(char *username, char *password)
     struct user *ptr = find_user_in_list(username);
     if (ptr != NULL)
     {
-        result = (validate_password(ptr, password) ? AUTH_RESULT_OK : AUTH_RESULT_OPERATION_NOT_PERMITED);
+        result = (validate_password(ptr, password)) ? AUTH_RESULT_OK : 
+                                            AUTH_RESULT_OPERATION_NOT_PERMITED;
     }
     else
     {

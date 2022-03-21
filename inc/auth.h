@@ -49,11 +49,11 @@ enum AUTH_RESULT_CODE
     AUTH_RESULT_OK,
     AUTH_RESULT_ERROR = -1,
     AUTH_RESULT_USER_LIMIT_EXECEED = -2,
-    AUTH_RESULT_MALLOC_FAILED,
-    AUTH_RESULT_PASS_VALIDATION_FAILED,
-    AUTH_RESULT_USER_NOT_FOUND,
-    AUTH_RESULT_USER_ALREADY_EXIST,
-    AUTH_RESULT_OPERATION_NOT_PERMITED
+    AUTH_RESULT_MALLOC_FAILED = -3,
+    AUTH_RESULT_PASS_VALIDATION_FAILED = -4,
+    AUTH_RESULT_USER_NOT_FOUND = -5,
+    AUTH_RESULT_USER_ALREADY_EXIST = -6,
+    AUTH_RESULT_OPERATION_NOT_PERMITED = -7
 };
 
 struct user
@@ -83,7 +83,7 @@ struct user *find_user_in_list(char *username);
  * @return true if validation succeed
  * @return false if validation failed
  */
-bool validate_pass(struct user *userptr, char *pass);
+bool validate_password(struct user *userptr, char *pass);
 /**
  * @brief validate password by username
  * 
@@ -91,7 +91,7 @@ bool validate_pass(struct user *userptr, char *pass);
  * @param pass[in] password for validation
  * @return result code in enum AUTH_RESULT_CODE 
  */
-int validate_user_pass(char *username, char *pass);
+int validate_user_password(char *username, char *pass);
 /**
  * @brief register user in system
  * 

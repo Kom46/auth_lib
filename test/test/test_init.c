@@ -21,11 +21,8 @@ void test_init( void )
     TEST_ASSERT_NOT_NULL(find_user_in_list(ADMIN_USERNAME));
     TEST_ASSERT_EQUAL_STRING(find_user_in_list(ADMIN_USERNAME)->username, 
                                                                 ADMIN_USERNAME);
-    // print_user_list();
     TEST_ASSERT_EQUAL(AUTH_RESULT_OK, register_user("xyz", "xyz"));
-    // print_user_list();
     TEST_ASSERT_EQUAL(AUTH_RESULT_OK, register_user("abc", "abc"));
-    // print_user_list();
     TEST_ASSERT_EQUAL(AUTH_RESULT_OK, register_user("bcd", "bcd"));
     print_user_list();
     TEST_ASSERT_NOT_EQUAL(AUTH_RESULT_OK, register_user("bcd", "bcd"));
