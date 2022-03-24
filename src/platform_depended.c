@@ -1,22 +1,5 @@
 #include "platform_depended.h"
 
-
-__attribute__ ((weak)) int save_buff_to_volatile_mem(void* ptr, size_t size)
-{
-  /*TODO: Implement Me!*/
-  (void)ptr;
-  (void)size;
-  return (int)0;
-}
-
-__attribute__ ((weak)) int load_buff_from_volatile_mem(void* ptr, size_t size)
-{
-  /*TODO: Implement Me!*/
-  (void)ptr;
-  (void)size;
-  return (int)0;
-}
-
 #if defined(W25QXX)
 #include "w25qxx.h"
 
@@ -25,7 +8,7 @@ __attribute__ ((weak)) int load_buff_from_volatile_mem(void* ptr, size_t size)
 // flash end address for storing user information
 #define FLASH_END_ADDR 0x000F00
 
-int save_buff_to_volatile_mem(void* ptr, size_t size)
+int save_buff_to_volatile_mem(void *ptr, size_t size)
 {
   int result = 0;
   if ((FLASH_START_ADDR + size) <= FLASH_END_ADDR)
@@ -40,7 +23,7 @@ int save_buff_to_volatile_mem(void* ptr, size_t size)
   return result;
 }
 
-int load_buff_from_volatile_mem(void* ptr, size_t size)
+int load_buff_from_volatile_mem(void *ptr, size_t size)
 {
   int result = 0;
   if ((FLASH_START_ADDR + size) <= FLASH_END_ADDR)
@@ -54,4 +37,21 @@ int load_buff_from_volatile_mem(void* ptr, size_t size)
   return result;
 }
 
+#else
+
+__attribute__((weak)) int save_buff_to_volatile_mem(void *ptr, size_t size)
+{
+  /*TODO: Implement Me!*/
+  (void)ptr;
+  (void)size;
+  return (int)0;
+}
+
+__attribute__((weak)) int load_buff_from_volatile_mem(void *ptr, size_t size)
+{
+  /*TODO: Implement Me!*/
+  (void)ptr;
+  (void)size;
+  return (int)0;
+}
 #endif
