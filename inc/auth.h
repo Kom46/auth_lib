@@ -61,7 +61,7 @@ struct user
     char username[MAX_USERNAME_LEN];
     char password[MAX_PASSWORD_LEN];
     struct user *next_user;
-};
+} *userlist_head = NULL, *userlist_tail = NULL;;
 /**
  * @brief function for user list initialization
  * 

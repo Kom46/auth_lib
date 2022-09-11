@@ -54,3 +54,8 @@ dkms.conf
 lib
 obj
 test/build
+.vscode-ctags
+test/build/test/cache/input.yml
+test/build/test/results/test_init.pass
+test/build/test/cache/input.yml
+test/build/test/results/test_init.pass
