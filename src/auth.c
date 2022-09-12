@@ -9,7 +9,7 @@
 static struct user *admin;
 int registered_users_count = 0;
 
-
+struct user *userlist_head = NULL, *userlist_tail = NULL;
 struct user *load_users(void)
 {
     struct user *result = NULL;

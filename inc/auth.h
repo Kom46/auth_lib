@@ -61,7 +61,7 @@ struct user
     char username[MAX_USERNAME_LEN];
     char password[MAX_PASSWORD_LEN];
     struct user *next_user;
-} *userlist_head = NULL, *userlist_tail = NULL;;
+};
 /**
  * @brief function for user list initialization
  * 
@@ -106,12 +106,6 @@ int register_user(char *username, char *pass);
  * @param username[in] username for user to delete
  */
 void delete_user(char *username);
-/**
- * @brief sort linked list function
- * @details sorts linked list in alphabetic order with degradated lists method
- * @param ptr[in] pointer from sorting started(interpret in function as list head)
- */
-void stack_sort_list(struct user **ptr);
 /**
  * @brief change user pass by it's handle
  * 

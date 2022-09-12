@@ -1,5 +1,7 @@
+// #include "sorting_functions.h"
 #include "auth.h"
-#include "string.h"
+#include <string.h>
+#include <stdlib.h>
 
 static struct sort_stack_item
 {
@@ -17,15 +19,18 @@ struct user *user_alphabetic_sort(struct user *ptr1, struct user *ptr2)
     }
     // default result
     result = ptr1;
+    printf("ptr1 %p ptr2 %p\n", ptr1, ptr2);
     ptr1->next_user = NULL;
     ptr2->next_user = NULL;
     char *username_ptr1 = strdup(ptr1->username);
     char *username_ptr2 = strdup(ptr2->username);
-    if (strcmp(username_ptr1, username_ptr2) < 0)
+    printf("uname 1:%s;uname2:%s;\n",username_ptr1, username_ptr2);
+    if (strcmp(username_ptr1, username_ptr2) > 0)
     {
         ptr2->next_user = ptr1;
         result = ptr2;
     }
+    printf("result %p\n", result);
     free(username_ptr1);
     free(username_ptr2);
     return result;
@@ -69,7 +74,7 @@ void stack_sort_list(struct user **ptr, struct user **userlist_tail)
         for (struct user *tmp = (*ptr)->next_user; tmp != NULL;
                                             tmp = tmp->next_user)
         {
-            userlist_tail = tmp;
+            *userlist_tail = tmp;
         }
     }
 }
